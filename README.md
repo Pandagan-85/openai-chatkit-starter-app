@@ -16,6 +16,28 @@ This is an **extended version** of the original [OpenAI ChatKit Starter Template
 
 This repository is the simplest way to bootstrap a [ChatKit](http://openai.github.io/chatkit-js/) application. It ships with a minimal Next.js UI, the ChatKit web component, and a ready-to-use session endpoint so you can experiment with OpenAI-hosted workflows built using [Agent Builder](https://platform.openai.com/agent-builder).
 
+## About This Project
+
+This extended version was developed during the [OpenAI Agent Builder course](https://www.udemy.com/course/openai-agent-builder/) by Diogo Alves de Resende. The course project involved building a **Deep Research Agent** with multi-agent orchestration:
+
+<img src="./public/docs/agent-builder.png" width=700 alt="Deep Research Agent Workflow" />
+
+**Agent Workflow:**
+1. Topic extraction from user input
+2. Guardrails validation
+3. Keyword generation (4 strategic keywords)
+4. User approval
+5. While loop for deep research on each keyword
+6. Final summarization
+
+**The Challenge**: The course didn't cover how to integrate ChatKit as a widget in external applications. I solved this by adding Docker containerization, AWS deployment, and a reusable React widget component.
+
+**Known Issues in Agent Builder** (as of course completion):
+- 🐛 Variable selection in dropdown menus sometimes selects wrong variables
+- 🐛 Web Search tool conflicts with MCP Google Calendar - remove Web Search if using Calendar
+
+**Live Demo**: [minimal-persona-showcase.lovable.app](https://minimal-persona-showcase.lovable.app/)
+
 ## What You Get
 
 - Next.js app with `<openai-chatkit>` web component and theming controls
