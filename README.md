@@ -1,8 +1,18 @@
-# ChatKit Starter Template
+# ChatKit Starter Template - AWS & Vercel Edition
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 ![NextJS](https://img.shields.io/badge/Built_with-NextJS-blue)
 ![OpenAI API](https://img.shields.io/badge/Powered_by-OpenAI_API-orange)
+![Docker](https://img.shields.io/badge/Docker-Ready-blue)
+![AWS](https://img.shields.io/badge/AWS-App_Runner-orange)
+
+This is an **extended version** of the original [OpenAI ChatKit Starter Template](https://github.com/openai/openai-chatkit-starter-app), enhanced with:
+
+- ✅ **Docker support** for containerized deployments
+- ✅ **AWS App Runner** deployment guide with full troubleshooting
+- ✅ **Multi-platform build** support (ARM64/AMD64)
+- ✅ **Production-ready** configuration for Vercel and AWS
+- ✅ **Easy integration** as a chatbot widget in other apps (Lovable, React, etc.)
 
 This repository is the simplest way to bootstrap a [ChatKit](http://openai.github.io/chatkit-js/) application. It ships with a minimal Next.js UI, the ChatKit web component, and a ready-to-use session endpoint so you can experiment with OpenAI-hosted workflows built using [Agent Builder](https://platform.openai.com/agent-builder).
 
@@ -54,18 +64,159 @@ Visit `http://localhost:3000` and start chatting. Use the prompts on the start s
 
 ### 5. Deploy your app
 
+You have multiple deployment options:
+
+#### Deploy to Vercel (Easiest)
+
 ```bash
 npm run build
 ```
 
-Before deploying your app, you need to verify the domain by adding it to the [Domain allowlist](https://platform.openai.com/settings/organization/security/domain-allowlist) on your dashboard.
+Before deploying, add your deployment domain to the [Domain allowlist](https://platform.openai.com/settings/organization/security/domain-allowlist) on your OpenAI dashboard.
+
+#### Deploy to AWS App Runner with Docker
+
+For a comprehensive guide on deploying with Docker to AWS App Runner (including ECR setup, health check configuration, and troubleshooting), see [AWS_DEPLOYMENT.md](./AWS_DEPLOYMENT.md).
+
+**Quick Docker setup:**
+
+```bash
+# 1. Build the Docker image (Mac M-series users: use --platform linux/amd64)
+docker buildx build \
+  --platform linux/amd64 \
+  --build-arg NEXT_PUBLIC_CHATKIT_WORKFLOW_ID="wf_..." \
+  -t chatkit-app:latest \
+  --load \
+  .
+
+# 2. Test locally
+docker run -p 3000:3000 \
+  -e OPENAI_API_KEY="sk-proj-..." \
+  -e NEXT_PUBLIC_CHATKIT_WORKFLOW_ID="wf_..." \
+  chatkit-app
+
+# Or use docker-compose
+docker-compose up
+```
+
+**Important notes:**
+- On Mac M1/M2/M3, always use `--platform linux/amd64` for AWS compatibility
+- Each user must provide their own `NEXT_PUBLIC_CHATKIT_WORKFLOW_ID` via `--build-arg`
+- See [AWS_DEPLOYMENT.md](./AWS_DEPLOYMENT.md) for complete AWS deployment instructions
+
+### Adding Your Domain to OpenAI Allowlist
+
+**IMPORTANT**: Before your deployed app can work, you MUST add your deployment domain to the OpenAI Domain Allowlist.
+
+1. **Get your deployment URL**:
+   - **Vercel**: `your-app-name.vercel.app`
+   - **AWS App Runner**: `xxxxxxxx.eu-west-1.awsapprunner.com`
+   - **Custom domain**: `chat.yourdomain.com`
+
+2. **Add to OpenAI Allowlist**:
+   - Go to [OpenAI Domain Allowlist](https://platform.openai.com/settings/organization/security/domain-allowlist)
+   - Click "Add domain"
+   - Enter your domain (without `https://`, just the domain part)
+   - Save
+
+3. **Wait a few minutes** for the changes to propagate, then test your app
+
+Without this step, ChatKit will fail to load with CORS errors.
+
+## Integration as Chatbot Widget
+
+Once deployed, you can easily integrate this chatbot as a floating widget in any React application (Lovable, Next.js, Vite, etc.).
+
+### Example Widget Component
+
+Create a `ChatbotWidget.tsx` component in your frontend app:
+
+```tsx
+import { useState } from "react";
+import { MessageCircle, X } from "lucide-react";
+
+interface ChatbotWidgetProps {
+  chatbotUrl?: string;
+}
+
+const ChatbotWidget = ({
+  chatbotUrl = "https://your-chatbot.vercel.app"
+}: ChatbotWidgetProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const toggleChatbot = () => {
+    setIsOpen(!isOpen);
+  };
+
+  return (
+    <>
+      {/* Chatbot Iframe */}
+      <div
+        className={`fixed bottom-24 right-4 md:right-6 w-[calc(100vw-2rem)] md:w-[400px] h-[500px] md:h-[600px] bg-background border border-border rounded-2xl shadow-lg z-[998] transition-all duration-300 ${
+          isOpen
+            ? "opacity-100 scale-100 pointer-events-auto"
+            : "opacity-0 scale-95 pointer-events-none"
+        }`}
+      >
+        <iframe
+          src={chatbotUrl}
+          className="w-full h-full rounded-2xl"
+          title="Chatbot"
+          allow="microphone"
+        />
+      </div>
+
+      {/* Floating Button */}
+      <button
+        onClick={toggleChatbot}
+        className={`fixed bottom-4 md:bottom-6 right-4 md:right-6 w-14 h-14 md:w-16 md:h-16 bg-primary hover:bg-primary/90 text-primary-foreground rounded-full flex items-center justify-center shadow-lg z-[999] transition-all duration-300 hover:scale-110 active:scale-95`}
+        aria-label={isOpen ? "Close chatbot" : "Open chatbot"}
+      >
+        {isOpen ? (
+          <X className="h-6 w-6 md:h-7 md:w-7" />
+        ) : (
+          <MessageCircle className="h-6 w-6 md:h-7 md:w-7" />
+        )}
+      </button>
+    </>
+  );
+};
+
+export default ChatbotWidget;
+```
+
+### Usage in Your App
+
+```tsx
+import ChatbotWidget from "@/components/ChatbotWidget";
+
+function App() {
+  return (
+    <div>
+      {/* Your app content */}
+      <ChatbotWidget chatbotUrl="https://your-deployed-chatbot.vercel.app" />
+    </div>
+  );
+}
+```
+
+### Quick Test on Lovable
+
+1. Deploy this ChatKit app to Vercel or AWS
+2. Add the domain to OpenAI allowlist
+3. Create the `ChatbotWidget` component in your Lovable project
+4. Pass your deployment URL as the `chatbotUrl` prop
+5. The chatbot will appear as a floating button in the bottom-right corner
+
+<img src="./public/docs/lovable.png" width=600 alt="ChatKit Widget integrated in Lovable" />
 
 ## Customization Tips
 
 - Adjust starter prompts, greeting text, [chatkit theme](https://chatkit.studio/playground), and placeholder copy in [`lib/config.ts`](lib/config.ts).
-- Update the event handlers inside [`components/.tsx`](components/ChatKitPanel.tsx) to integrate with your product analytics or storage.
+- Update the event handlers inside [`components/ChatKitPanel.tsx`](components/ChatKitPanel.tsx) to integrate with your product analytics or storage.
 
 ## References
 
 - [ChatKit JavaScript Library](http://openai.github.io/chatkit-js/)
 - [Advanced Self-Hosting Examples](https://github.com/openai/openai-chatkit-advanced-samples)
+- [Original OpenAI Starter Template](https://github.com/openai/openai-chatkit-starter-app)

@@ -50,6 +50,8 @@ USER nextjs
 EXPOSE 3000
 
 ENV PORT=3000
+# HOSTNAME must be 0.0.0.0 to accept connections from AWS App Runner health checks
+# Without this, Next.js binds only to the internal hostname and health checks fail
 ENV HOSTNAME="0.0.0.0"
 
 # Start the app

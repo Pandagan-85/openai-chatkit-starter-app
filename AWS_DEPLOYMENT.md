@@ -51,12 +51,14 @@ Puoi usare:
 
 6. **Environment variables** (IMPORTANTE!)
 
-   Aggiungi queste variabili:
+   Aggiungi queste variabili (usa "Plaintext" come tipo):
    ```
    OPENAI_API_KEY = sk-proj-vDuGSrFQLgb1tCKr8CQ9...
-   NEXT_PUBLIC_CHATKIT_WORKFLOW_ID = wf_68f0d75a4bec8190b9633a399a1cc9a508dbfab9554bdaaf
    NODE_ENV = production
+   HOSTNAME = 0.0.0.0
    ```
+
+   **Nota**: `NEXT_PUBLIC_CHATKIT_WORKFLOW_ID` è già compilato nell'immagine Docker tramite build arg, non serve aggiungerlo qui.
 
 7. **Security**
    - Instance role: Usa il ruolo di default o creane uno nuovo
@@ -67,9 +69,13 @@ Puoi usare:
    - Max instances: 5 (regola in base al traffico)
 
 9. **Health check**
+   - Protocol: HTTP (non TCP!)
    - Path: `/`
+   - Port: 3000
    - Interval: 5 secondi
    - Timeout: 2 secondi
+   - Healthy threshold: 1
+   - Unhealthy threshold: 5
 
 10. **Review and Create**
 
@@ -93,20 +99,33 @@ Puoi usare:
 ### Step 1: Build e Push su ECR
 
 ```bash
-# 1. Crea un repository ECR
-aws ecr create-repository --repository-name chatkit-app --region us-east-1
+# 1. Crea un repository ECR (sostituisci eu-west-1 con la tua regione)
+aws ecr create-repository --repository-name chatkit-app --region eu-west-1
 
 # 2. Login su ECR
-aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com
+aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin <ACCOUNT_ID>.dkr.ecr.eu-west-1.amazonaws.com
 
 # 3. Build l'immagine Docker
-docker build -t chatkit-app .
+# ⚠️ IMPORTANTE per Mac M1/M2/M3: usa --platform linux/amd64
+# ⚠️ Sostituisci "wf_..." con il TUO workflow ID da Agent Builder
+docker buildx build \
+  --platform linux/amd64 \
+  --build-arg NEXT_PUBLIC_CHATKIT_WORKFLOW_ID="wf_..." \
+  -t chatkit-app:latest \
+  --load \
+  .
+
+# Per altri sistemi (Intel/Linux):
+# docker build --build-arg NEXT_PUBLIC_CHATKIT_WORKFLOW_ID="wf_..." -t chatkit-app .
+
+# NOTA: Ogni utente che clona questo repository deve usare il proprio workflow ID.
+# Il workflow ID viene compilato nell'immagine Docker al momento del build.
 
 # 4. Tag l'immagine
-docker tag chatkit-app:latest <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/chatkit-app:latest
+docker tag chatkit-app:latest <ACCOUNT_ID>.dkr.ecr.eu-west-1.amazonaws.com/chatkit-app:latest
 
 # 5. Push su ECR
-docker push <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/chatkit-app:latest
+docker push <ACCOUNT_ID>.dkr.ecr.eu-west-1.amazonaws.com/chatkit-app:latest
 ```
 
 ### Step 2: Crea il servizio App Runner
@@ -220,6 +239,24 @@ Se hai un dominio tuo:
 - Controlla i logs in CloudWatch
 - Verifica le environment variables
 - Assicurati che la porta sia 3000
+
+### Health check fallisce (Mac M1/M2/M3)
+**Problema**: L'immagine Docker è stata builddata per ARM64 invece di AMD64
+
+**Soluzione**: Rebuila l'immagine specificando la piattaforma:
+```bash
+docker buildx build \
+  --platform linux/amd64 \
+  --build-arg NEXT_PUBLIC_CHATKIT_WORKFLOW_ID="wf_..." \
+  -t chatkit-app:latest \
+  --load \
+  .
+```
+
+### Health check fallisce - "Network is unreachable"
+**Problema**: Next.js sta ascoltando solo sull'hostname interno
+
+**Soluzione**: Aggiungi la variabile d'ambiente `HOSTNAME=0.0.0.0` in App Runner
 
 ### ChatKit non si carica
 - Verifica che il dominio sia nella allowlist OpenAI
