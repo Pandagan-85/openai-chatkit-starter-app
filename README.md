@@ -208,6 +208,8 @@ function App() {
 4. Pass your deployment URL as the `chatbotUrl` prop
 5. The chatbot will appear as a floating button in the bottom-right corner
 
+**Live Demo**: See the widget in action at [minimal-persona-showcase.lovable.app](https://minimal-persona-showcase.lovable.app/)
+
 <img src="./public/docs/lovable.png" width=600 alt="ChatKit Widget integrated in Lovable" />
 
 ## Customization Tips
