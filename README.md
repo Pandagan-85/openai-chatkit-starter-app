@@ -90,11 +90,36 @@ You have multiple deployment options:
 
 #### Deploy to Vercel (Easiest)
 
-```bash
-npm run build
-```
+**Step-by-step guide:**
 
-Before deploying, add your deployment domain to the [Domain allowlist](https://platform.openai.com/settings/organization/security/domain-allowlist) on your OpenAI dashboard.
+1. **Fork this repository** (or use the [original template](https://github.com/openai/openai-chatkit-starter-app))
+
+2. **Create a Vercel account** at [vercel.com](https://vercel.com) if you don't have one
+
+3. **Import your repository:**
+   - Go to Vercel Dashboard → "Add New" → "Project"
+   - Import your forked ChatKit repository from GitHub
+
+4. **Configure environment variables** (BEFORE deploying):
+   - In the Vercel import screen, add these environment variables:
+     - `OPENAI_API_KEY` = `sk-proj-your-api-key-here`
+     - `NEXT_PUBLIC_CHATKIT_WORKFLOW_ID` = `wf_your-workflow-id-here`
+
+5. **Deploy:**
+   - Click "Deploy"
+   - Wait for the build to complete (~2 minutes)
+
+6. **Add domain to OpenAI Allowlist** (CRITICAL!):
+   - After deployment, Vercel assigns you a domain like `your-app.vercel.app`
+   - Go to [OpenAI Domain Allowlist](https://platform.openai.com/settings/organization/security/domain-allowlist)
+   - Click "Add domain" and enter your Vercel domain (without `https://`)
+   - Save and wait a few minutes for propagation
+
+7. **Test your app:**
+   - Visit your Vercel URL
+   - ChatKit should load and work correctly
+
+**That's it!** Now you can use this URL in the Lovable widget component.
 
 #### Deploy to AWS App Runner with Docker
 
